@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- status 为设置日志输出级别，级别如下：OFF 、FATAL 、ERROR、WARN、INFO、DEBUG、TRACE 、ALL -->
+<!-- monitorInterval 监控间隔 指log4j2每隔600秒（10分钟），自动监控该配置文件是否有变化，有则自动根据文件内容重新配置 -->
+<configuration status="all" monitorInterval="600">
+    <!--
+     log4j2使用说明：
+      1、使用方式如下：
+         private static final Logger logger = LogManager.getLogger(实际类名.class.getName());
+
+      2、日志说明：
+         1)请根据实际情况配置各项参数
+         2)需要注意日志文件备份数和日志文件大小，注意预留目录空间
+         3)实际部署的时候backupFilePatch变量需要修改成linux目录
+    -->
+    <Properties>
+        <property name="file_name">app.log</property>
+        <property name="rolling_file_trace">logs/trace/%d{yyyy-MM-dd}/app-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="rolling_file_debug">logs/debug/%d{yyyy-MM-dd}/app-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="rolling_file_info">logs/info/%d{yyyy-MM-dd}/app-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="rolling_file_warn">logs/warn/%d{yyyy-MM-dd}/app-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="rolling_file_error">logs/error/%d{yyyy-MM-dd}/app-%d{yyyy-MM-dd}-%i.log.gz</property>
+        <property name="output_log_pattern">%d{yyyy-MM-dd HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n</property>
+        <!-- 日志切割的最小单位 -->
+        <property name="every_file_size">5MB</property>
+        <!-- 日志输出级别 -->
+        <property name="output_log_level">all</property>
+        <!-- 控制台日志输出级别 -->
+        <property name="output_console_log_level">debug</property>
+    </Properties>
+
+    <!-- 定义appender -->
+    <appenders>
+        <!-- 控制台输出的配置 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <!-- 控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch）-->
+            <ThresholdFilter level="${output_console_log_level}" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!-- 这个都知道是输出日志的格式 -->
+            <PatternLayout pattern="${output_log_pattern}"/>
+        </Console>
+
+        <!-- log4j建议只使用四个级别，优先级从高到低分别是ERROR、WARN、INFO、DEBUG -->
+        <!-- 这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档 -->
+        <!-- Filters.ThresholdFilter -->
+        <!-- 字段	        描述 -->
+        <!-- level	        输出级别，例：level=”info”,日志级别为info或者以上(匹配的界别) -->
+        <!-- onMatch	    DENY/ACCEPT 禁止或者接受（是否接受匹配）-->
+        <!-- onMismatch	    DENY/NEUTRAL （是否接受其他高于level的级别）-->
+        <!-- 显示TRACE级别之外的信息 -->
+        <RollingFile name="TRACE" fileName="logs/trace/${file_name}"
+                     filePattern="${rolling_file_trace}">
+            <PatternLayout pattern="${output_log_pattern}"/>
+            <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            <Filters>
+                <ThresholdFilter level="debug" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- 显示DEBUG级别之外的信息 -->
+        <RollingFile name="DEBUG" fileName="logs/debug/${file_name}"
+                     filePattern="${rolling_file_debug}">
+            <PatternLayout pattern="${output_log_pattern}"/>
+            <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            <Filters>
+                <ThresholdFilter level="info" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- 显示INFO级别的信息 -->
+        <RollingFile name="INFO" fileName="logs/info/${file_name}"
+                     filePattern="${rolling_file_info}">
+            <PatternLayout pattern="${output_log_pattern}"/>
+            <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            <Filters>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- 显示WARN级别的信息 -->
+        <RollingFile name="WARN" fileName="logs/warn/${file_name}"
+                     filePattern="${rolling_file_warn}">
+            <PatternLayout pattern="${output_log_pattern}"/>
+            <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+
+        <!-- 显示ERROR级别的信息 -->
+        <RollingFile name="ERROR" fileName="logs/error/${file_name}"
+                     filePattern="${rolling_file_error}">
+            <PatternLayout pattern="${output_log_pattern}"/>
+            <SizeBasedTriggeringPolicy size="${every_file_size}"/>
+            <Filters>
+                <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingFile>
+    </appenders>
+
+    <!-- 定义logger，只有定义了logger并引入的appender，appender才会生效 -->
+    <loggers>
+        <!-- 建立一个默认的root的logger，需要在root的level中指定输出的级别 -->
+        <root level="${output_log_level}">
+            <AppenderRef ref="TRACE"/>
+            <AppenderRef ref="DEBUG"/>
+            <AppenderRef ref="INFO"/>
+            <AppenderRef ref="WARN"/>
+            <AppenderRef ref="ERROR"/>
+            <appender-ref ref="Console"/>
+        </root>
+    </loggers>
+</configuration>
