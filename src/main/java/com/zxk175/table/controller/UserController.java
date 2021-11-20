@@ -204,11 +204,11 @@ public class UserController {
         int limitd = Integer.parseInt(null == limit ? "10" : limit);
 
         Pages<User> pages = new Pages<>();
-        //开始分页,参数1为请求第几页,参数2为请求条数
+        // 开始分页,参数1为请求第几页,参数2为请求条数
         PageHelper.startPage(nowPaged, limitd);
 
 
-        //查询条件
+        // 查询条件
         UserExample example = new UserExample();
         Criteria criteria = example.createCriteria();
         if (StringUtil.isNotEmpty(name)) {
@@ -219,10 +219,10 @@ public class UserController {
         }
         example.setOrderByClause(order);
 
-        //查询结果
+        // 查询结果
         List<User> userList = userService.getAllUserByExample(example);
 
-        //取记录总条数
+        // 取记录总条数
         PageInfo<User> pageInfo = new PageInfo<>(userList);
         int total = (int) pageInfo.getTotal();
 
